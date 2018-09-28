@@ -57,14 +57,15 @@ data_2 <- data %>% #selecting variables with many NAs
   select(SUBJ, VISIT = VISIT.y, Diagnosis, Age, Gender, Ethnicity, 
          ADOS_1, nonVerbalIQ_1, verbalIQ_1, MOT_MLU:tokens_CHI)
 
+
 data_3 <- data_2 %>%
-  mutate(SUBJ = as.integer(factor(SUBJ)))
+  mutate(SUBJ = as.integer(factor(SUBJ)),
+         Gender = ifelse(Gender == 1, "M", "F"), #changes the Gender
+         Diagnosis = ifelse(Diagnosis == "A", "ASD", "TD")) #changes diagnosis
 
-data_3$Gender <- if_else(data_3$Gender == "1", "F", "M") #changes the Gender 
+write_csv(data_3, "test_clean.csv")
 
-data_3$Diagnosis <- if_else(data$Diagnosis == "A", "ASD", "TD") #changes diagnosis 
-
-write.csv(data_3, "train_clean.csv", row.names = F)
+rm(list=ls())
 ```
 
 ## Welcome to the third exciting part of the Language Development in ASD exercise
@@ -98,6 +99,7 @@ p_load(tidyverse, lmerTest, modelr, merTools)
 
 #loading data
 train <- read.csv("language_dev_asd_clean_2.csv")
+test <- read_csv("test_clean.csv")
 
 #fitting old models to new data
 #quadratic simple
