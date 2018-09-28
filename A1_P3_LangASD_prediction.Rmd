@@ -34,6 +34,26 @@ How did your models from last time perform? In this exercise you have to compare
 formatting tip: If you write code in this document and plan to hand it in, remember to put include=FALSE in the code chunks before handing in.
 
 ```{r}
+#libraries
+library(pacman)
+p_load(tidyverse, lmerTest, modelr)
+
+#loading data
+train <- read.csv("language_dev_asd_clean_2.csv")
+
+#fitting old models to new data
+#quadratic simple
+simple <- lmer(CHI_MLU ~ Diagnosis + VISIT + I(VISIT^2) + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
+
+#quadratic elaborate (fixed effects)
+big_model <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
+
+#rmse 
+rmse(simple, train) # 0.289 
+rmse(big_model, train) # 0.277
+
+#predict 
+
 
 ```
 
