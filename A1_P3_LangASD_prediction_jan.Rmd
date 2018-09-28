@@ -17,7 +17,10 @@ lu_test_raw <- read.csv("LU_test.csv")
 token_test_raw <- read.csv("token_test.csv")
 
 demo <- demo_test_raw %>%
-  rename(SUBJ = Child.ID, VISIT = Visit) #last argument renamed to first argument. 
+  rename(SUBJ = Child.ID, VISIT = Visit) %>% #last argument renamed to first argument. 
+  mutate(Age = as.character(Age),
+         Age = str_replace_all(Age, ",", "."),
+         Age = as.numeric(Age))
 
 lu <- lu_test_raw %>%
   mutate(VISIT = str_extract(VISIT, "[0-9]"), #regex indicating that we only want digits. 
