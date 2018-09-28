@@ -33,6 +33,11 @@ How did your models from last time perform? In this exercise you have to compare
 
 formatting tip: If you write code in this document and plan to hand it in, remember to put include=FALSE in the code chunks before handing in.
 
+```{r}
+
+```
+
+
 [HERE GOES YOUR ANSWER]
 
 ### Exercise 2) Model Selection via Cross-validation (N.B: ChildMLU!)
