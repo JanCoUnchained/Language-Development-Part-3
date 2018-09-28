@@ -48,16 +48,37 @@ simple <- lmer(CHI_MLU ~ Diagnosis + VISIT + I(VISIT^2) + (1+VISIT + I(VISIT^2)|
 #quadratic elaborate (fixed effects)
 big_model <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
 
-#rmse 
-rmse(simple, train) # 0.289 
-rmse(big_model, train) # 0.277
+#rmse 2 approaches
+#rmse from modelr
+modelr::rmse(simple, train) # 0.28
+modelr::rmse(big_model, train) # 0.28
+
+#rmse from Metrics 
+p_load(Metrics)
+Metrics::rmse(train$CHI_MLU, predict(simple))
+Metrics::rmse(train$CHI_MLU, predict(big_model))
+
+#Ricardo 
+#rmse(predict(m), y)
+#rmse(predict(m, newdata), y)
 
 #prediction 
-predict()
+test <- read.csv("test_clean.csv")
+test <- test[-2,]
+
+str(train)
+str(test)
+test$Age <- as.numeric(test$Age) #age is fucked up. 
+
+predict(big_model, train) #works 
+predict(big_model, test) #works 
+
+
 
 #predict intervals 
 p_load(merTools)
-predictintervals()
+predictInterval(simple, train)
+plot()
 
 
 ```
