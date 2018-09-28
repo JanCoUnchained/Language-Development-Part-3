@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
 ## Welcome to the third exciting part of the Language Development in ASD exercise
@@ -20,8 +21,37 @@ N.B. There are several datasets for this exercise, so pay attention to which one
 * Demographic and clinical data: https://www.dropbox.com/s/ra99bdvm6fzay3g/demo_test.csv?dl=1
 * Utterance Length data: https://www.dropbox.com/s/uxtqqzl18nwxowq/LU_test.csv?dl=1
 * Word data: https://www.dropbox.com/s/1ces4hv8kh0stov/token_test.csv?dl=1
-
+```{r}
+clean_train <- read.csv("language_dev_asd_clean_2.csv")
+demo_rawT <- read.csv("demo_test.csv")
+lu_rawT <- read.csv("LU_test.csv")
+token_rawT <- read.csv("token_test.csv")
+#Here we read all the data into R
+```
 ### Exercise 1) Testing model performance
+
+```{r}
+demoT <- demo_rawT %>%
+  rename(SUBJ = Child.ID, VISIT = Visit) #last argument renamed to first argument.
+luT <- lu_rawT %>%
+  mutate(VISIT = str_extract(VISIT, "[0-9]"), #regex indicating that we only want digits.
+         VISIT = as.integer(VISIT)) #as integer, as there is now only digits.
+
+
+tokenT <- token_rawT %>%
+  mutate(VISIT = str_extract(VISIT, "[0-9]"), #same as above
+         VISIT = as.integer(VISIT))
+
+#ifelse loop. First, detecting any lower case characters --> removing the last one if that is the case --> making it as.character because ifelse defaults to numeric.
+lu_2T <- luT %>%
+<<<<<<< HEAD
+  mutate(SUBJ = ifelse(str_detect(SUBJ, "[a-z]"), str_remove(SUBJ, ".$"), as.character(SUBJ))) 
+
+token_2T <- tokenT %>%
+=======
+>>>>>>> 553ead4348a7fa46df25bf4adc694671c619e48d
+  mutate(SUBJ = ifelse(str_detect(SUBJ, "[a-z]"), str_remove(SUBJ, ".$"), as.character(SUBJ)))
+```
 
 How did your models from last time perform? In this exercise you have to compare the results on the training data () and on the test data. Report both of them. Compare them. Discuss why they are different.
 
