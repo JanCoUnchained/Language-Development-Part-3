@@ -52,7 +52,12 @@ big_model <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_M
 rmse(simple, train) # 0.289 
 rmse(big_model, train) # 0.277
 
-#predict 
+#prediction 
+predict()
+
+#predict intervals 
+p_load(merTools)
+predictintervals()
 
 
 ```
