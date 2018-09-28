@@ -1,0 +1,172 @@
+---
+title: "Assignment 1 - Language Development in ASD - part 3"
+author: "Riccardo Fusaroli"
+date: "August 10, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(tidyselect)
+
+# TEST DATA PREPROCESSING
+demo_test_raw <- read.csv("demo_test.csv")
+lu_test_raw <- read.csv("LU_test.csv")
+token_test_raw <- read.csv("token_test.csv")
+
+demo <- demo_test_raw %>%
+  rename(SUBJ = Child.ID, VISIT = Visit) #last argument renamed to first argument. 
+
+lu <- lu_test_raw %>%
+  mutate(VISIT = str_extract(VISIT, "[0-9]"), #regex indicating that we only want digits. 
+         VISIT = as.integer(VISIT)) #as integer, as there is now only digits. 
+
+token <- token_test_raw %>%
+  mutate(VISIT = as.character(VISIT), #same as above. 
+         VISIT = str_extract(VISIT, "[0-9]"),
+         VISIT = as.integer(VISIT)) %>%
+  mutate(SUBJ = ifelse(str_detect(SUBJ, "[a-z]"), str_remove(SUBJ, ".$"), as.character(SUBJ)))
+
+lu_2 <- lu %>%
+  mutate(SUBJ = ifelse(str_detect(SUBJ, "[a-z]"), str_remove(SUBJ, ".$"), as.character(SUBJ)))
+
+int_var <- unlist(str_split("SUBJ, VISIT, Ethnicity, Diagnosis, Gender, Age, ADOS, MullenRaw, ExpressiveLangRaw, MOT_MLU, MOT_LUstd, CHI_MLU, CHI_LUstd, types_MOT, types_CHI, tokens_MOT, tokens_CHI"
+                     ,", "))
+
+demo_3 <- demo %>%
+  select(one_of(int_var)) %>% #selecting variables that are also in the list: one_of
+  rename(nonVerbalIQ = MullenRaw, verbalIQ = ExpressiveLangRaw) #renaming MullenRaw & ExpressiveLangRaw to nonVerbalIq & verbalIQ. 
+
+lu_3 <- lu_2 %>%
+  select(one_of(int_var))
+
+token_3 <- token %>%
+  select(one_of(int_var))
+
+data <- demo_3 %>% #demo has to be first because it is the biggest
+  left_join(lu_3, by = c("SUBJ", "VISIT")) %>% #Joining SUBJ & VISIT which are common to all 
+  left_join(token_3, by = c("SUBJ", "VISIT")) #Left join ensures that it the incomplete rows are kept.
+
+data_2 <- data %>% #selecting variables with many NAs 
+  select(SUBJ, VISIT, ADOS_1 = ADOS, nonVerbalIQ_1 = nonVerbalIQ, verbalIQ_1 = verbalIQ) %>% 
+  filter(VISIT == 1) %>% #filtering by VISIT = 1
+  right_join(data, by = c("SUBJ")) %>% #right-join bypasses new steps. 
+  select(-VISIT.x, -ADOS, -nonVerbalIQ, -verbalIQ) %>% #
+  select(SUBJ, VISIT = VISIT.y, Diagnosis, Age, Gender, Ethnicity, 
+         ADOS_1, nonVerbalIQ_1, verbalIQ_1, MOT_MLU:tokens_CHI)
+
+data_3 <- data_2 %>%
+  mutate(SUBJ = as.integer(factor(SUBJ)))
+
+data_3$Gender <- if_else(data_3$Gender == "1", "F", "M") #changes the Gender 
+
+data_3$Diagnosis <- if_else(data$Diagnosis == "A", "ASD", "TD") #changes diagnosis 
+
+write.csv(data_3, "train_clean.csv", row.names = F)
+```
+
+## Welcome to the third exciting part of the Language Development in ASD exercise
+
+In this exercise we will delve more in depth with different practices of model comparison and model selection, by first evaluating your models from last time, then learning how to cross-validate models and finally how to systematically compare models.
+
+N.B. There are several datasets for this exercise, so pay attention to which one you are using!
+
+1. The (training) dataset from last time (the awesome one you produced :-) ).
+2. The (test) datasets on which you can test the models from last time:
+* Demographic and clinical data: https://www.dropbox.com/s/ra99bdvm6fzay3g/demo_test.csv?dl=1
+* Utterance Length data: https://www.dropbox.com/s/uxtqqzl18nwxowq/LU_test.csv?dl=1
+* Word data: https://www.dropbox.com/s/1ces4hv8kh0stov/token_test.csv?dl=1
+
+### Exercise 1) Testing model performance
+
+How did your models from last time perform? In this exercise you have to compare the results on the training data () and on the test data. Report both of them. Compare them. Discuss why they are different.
+
+- recreate the models you chose last time (just write the model code again and apply it to your training data (from the first assignment))
+- calculate performance of the model on the training data: root mean square error is a good measure. (Tip: google the function rmse())
+- create the test dataset (apply the code from assignment 1 part 1 to clean up the 3 test datasets)
+- test the performance of the models on the test data (Tips: google the functions "predict()")
+- optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
+
+formatting tip: If you write code in this document and plan to hand it in, remember to put include=FALSE in the code chunks before handing in.
+
+```{r}
+#libraries
+library(pacman)
+p_load(tidyverse, lmerTest, modelr, merTools)
+
+#loading data
+train <- read.csv("language_dev_asd_clean_2.csv")
+
+#fitting old models to new data
+#quadratic simple
+simple <- lmer(CHI_MLU ~ Diagnosis + VISIT + 
+                 I(VISIT^2) + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
+
+#quadratic elaborate (fixed effects)
+big_model <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT + 
+                    (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
+
+#rmse 
+rmse(simple, train) # 0.289 
+rmse(big_model, train) # 0.277
+
+#predict 
+#predict(simple, )
+
+```
+
+
+[HERE GOES YOUR ANSWER]
+
+### Exercise 2) Model Selection via Cross-validation (N.B: ChildMLU!)
+
+One way to reduce bad surprises when testing a model on new data is to train the model via cross-validation. 
+
+In this exercise you have to use cross-validation to calculate the predictive error of your models and use this predictive error to select the best possible model.
+
+- Use cross-validation to compare your model from last week with the basic model (Child MLU as a function of Time and Diagnosis, and don't forget the random effects!)
+- (Tips): google the function "createFolds";  loop through each fold, train both models on the other folds and test them on the fold)
+
+Which model is better at predicting new data: the one you selected last week or the one chosen via cross-validation this week?
+
+- Test both of them on the test data.
+- Report the results and comment on them.
+
+- Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
+
+- Bonus Question 1: What is the effect of changing the number of folds? Can you plot RMSE as a function of number of folds?
+- Bonus Question 2: compare the cross-validated predictive error against the actual predictive error on the test data
+
+
+[HERE GOES YOUR ANSWER]
+
+### Exercise 3) Assessing the single child
+
+Let's get to business. This new kiddo - Bernie - has entered your clinic. This child has to be assessed according to his group's average and his expected development.
+
+Bernie is one of the six kids in the test dataset, so make sure to extract that child alone for the following analysis.
+
+You want to evaluate:
+
+- how does the child fare in ChildMLU compared to the average TD child at each visit? Define the distance in terms of absolute difference between this Child and the average TD.
+(Tip: recreate the equation of the model: Y=Intercept+BetaX1+BetaX2, etc; input the average of the TD group  for each parameter in the model as X1, X2, etc.).
+
+- how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
+
+[HERE GOES YOUR ANSWER]
+
+### OPTIONAL: Exercise 4) Model Selection via Information Criteria
+Another way to reduce the bad surprises when testing a model on new data is to pay close attention to the relative information criteria between the models you are comparing. Let's learn how to do that!
+
+Re-create a selection of possible models explaining ChildMLU (the ones you tested for exercise 2, but now trained on the full dataset and not cross-validated).
+
+Then try to find the best possible predictive model of ChildMLU, that is, the one that produces the lowest information criterion.
+
+- Bonus question for the optional exercise: are information criteria correlated with cross-validated RMSE? That is, if you take AIC for Model 1, Model 2 and Model 3, do they co-vary with their cross-validated RMSE?
+
+### OPTIONAL: Exercise 5): Using Lasso for model selection
+
+Welcome to the last secret exercise. If you have already solved the previous exercises, and still there's not enough for you, you can expand your expertise by learning about penalizations. Check out this tutorial: http://machinelearningmastery.com/penalized-regression-in-r/ and make sure to google what penalization is, with a focus on L1 and L2-norms. Then try them on your data!
+
