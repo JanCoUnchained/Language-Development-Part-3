@@ -50,17 +50,13 @@ big_model <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_M
 
 #rmse 2 approaches
 #rmse from modelr
-modelr::rmse(simple, train) # 0.28
+modelr::rmse(simple, train) # 0.29
 modelr::rmse(big_model, train) # 0.28
 
 #rmse from Metrics 
 p_load(Metrics)
 Metrics::rmse(train$CHI_MLU, predict(simple))
 Metrics::rmse(train$CHI_MLU, predict(big_model))
-
-#Ricardo 
-#rmse(predict(m), y)
-#rmse(predict(m, newdata), y)
 
 #prediction 
 test <- read.csv("test_clean.csv")
@@ -70,10 +66,14 @@ str(train)
 str(test)
 test$Age <- as.numeric(test$Age) #age is fucked up. 
 
-predict(big_model, train) #works 
-predict(big_model, test) #works 
+#the function we will put into rmse 
+predictions <- predict(simple, newdata = test, allow.new.levels = T) 
+predictions <- predict(big_model, test, allow.new.levels = T) #same as above. 
 
-
+#with rmse 
+Metrics::rmse(test$CHI_MLU, predict(simple, newdata = test, allow.new.levels = T)) # 1.3 
+Metrics::rmse(test$CHI_MLU, predict(big_model, newdata = test, allow.new.levels = T)) # .6
+#we have approximately .28 --> .61 
 
 #predict intervals 
 p_load(merTools)
