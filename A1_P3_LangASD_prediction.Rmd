@@ -71,13 +71,29 @@ predictions <- predict(simple, newdata = test, allow.new.levels = T)
 predictions <- predict(big_model, test, allow.new.levels = T) #same as above. 
 
 #with rmse 
-Metrics::rmse(test$CHI_MLU, predict(simple, newdata = test, allow.new.levels = T)) # 1.3 
-Metrics::rmse(test$CHI_MLU, predict(big_model, newdata = test, allow.new.levels = T)) # .6
+test_simple <- Metrics::rmse(test$CHI_MLU, predict(simple, newdata = test, allow.new.levels = T)) # 1.3 
+test_rmse <- Metrics::rmse(test$CHI_MLU, predict(big_model, newdata = test, allow.new.levels = T)) # .6
 #we have approximately .28 --> .61 
+
+#divide by standard deviation 
+test_rmse_by_sd <- test_rmse / sd(test$CHI_MLU) # .68
+test_rmse_simple_by_sd <- test_simple / sd(test$CHI_MLU) # .15
 
 #predict intervals 
 p_load(merTools)
-predictInterval(simple, train)
+predictions <- predictInterval(big_model, test, level = .95)
+predictions <- as.data.frame(predictions)
+
+#adding rownames 
+library(plyr)
+predictions <- rownames_to_column(predictions, "visit")
+
+#how do we put the upper/lower into the plot? 
+ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=predictions[1:35,]) +
+  geom_point() +
+  geom_linerange() +
+  labs(x="Index", y="Prediction w/ 95% PI") + theme_bw()
+
 plot()
 
 
@@ -105,6 +121,18 @@ Which model is better at predicting new data: the one you selected last week or 
 - Bonus Question 1: What is the effect of changing the number of folds? Can you plot RMSE as a function of number of folds?
 - Bonus Question 2: compare the cross-validated predictive error against the actual predictive error on the test data
 
+```{r}
+
+#create folds - readymade function
+
+#making a for loop. 
+for (F in Folds){
+  select all the kids in f = testdata
+  select all the kids not in f = traindata
+}
+
+
+```
 
 [HERE GOES YOUR ANSWER]
 
