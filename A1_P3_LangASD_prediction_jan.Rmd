@@ -98,10 +98,10 @@ formatting tip: If you write code in this document and plan to hand it in, remem
 ```{r}
 #libraries
 library(pacman)
-p_load(tidyverse, lmerTest, modelr, merTools)
+p_load(tidyverse, lmerTest, modelr, merTools, Metrics)
 
 #loading data
-train <- read.csv("language_dev_asd_clean_2.csv")
+train <- read_csv("language_dev_asd_clean_2.csv")
 test <- read_csv("test_clean.csv")
 
 #fitting old models to new data
@@ -112,14 +112,33 @@ simple <- lmer(CHI_MLU ~ Diagnosis + VISIT +
 #quadratic elaborate (fixed effects)
 big_model <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT + 
                     (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
+```
 
-#rmse 
-rmse(simple, train) # 0.289 
-rmse(big_model, train) # 0.277
 
-#predict 
-#predict(simple, )
+```{r}
+#rmse 2 approaches
+#rmse from modelr
+modelr::rmse(simple, train) # 0.28
+modelr::rmse(big_model, train) # 0.28
 
+#rmse from Metrics 
+Metrics::rmse(train$CHI_MLU, predict(simple))
+Metrics::rmse(train$CHI_MLU, predict(big_model))
+
+# comparing models
+test_2 <- test %>%
+  na.omit()
+
+simple_rmse <- Metrics::rmse(test_2$CHI_MLU, predict(simple, newdata = test_2, allow.new.levels = T))
+big_rmse <- Metrics::rmse(test_2$CHI_MLU, predict(big_model, newdata = test_2, allow.new.levels = T))
+
+# deviding root mean sq error by sd of predicted variable, this is to standardize
+simple_rmse / sd(test_2$CHI_MLU)
+big_rmse / sd(test_2$CHI_MLU)
+
+#predict intervals (pckg: merTools)
+interval_simple <- predictInterval(simple, test_2, level = .95)
+interval_big <- predictInterval(big_model, test_2, level = .95)
 ```
 
 
