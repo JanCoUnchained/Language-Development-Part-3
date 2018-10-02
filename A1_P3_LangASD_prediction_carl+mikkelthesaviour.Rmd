@@ -186,10 +186,9 @@ for( X in Folds){
 
 } 
 
-rmseTrainSim
-rmseTrainBig
-rmseTestSim
-rmseTestBig
+MeanTheFuckers <- as.table(c("Test Sim"=mean(rmseTestSim), "Test Big"=mean(rmseTestBig),"Train Sim"=mean(rmseTrainSim), "Train Big"=mean(rmseTrainBig)))
+
+MeanTheFuckers #REPORT AND COMMENT THIS
 ```
 
 
@@ -211,6 +210,12 @@ Which model is better at predicting new data: the one you selected last week or 
 Let's get to business. This new kiddo - Bernie - has entered your clinic. This child has to be assessed according to his group's average and his expected development.
 
 Bernie is one of the six kids in the test dataset, so make sure to extract that child alone for the following analysis.
+
+```{r}
+BernieData <- filter(test, SUBJ=="2")
+BernieData
+```
+
 
 You want to evaluate:
 
