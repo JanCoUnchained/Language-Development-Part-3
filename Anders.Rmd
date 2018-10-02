@@ -7,6 +7,8 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(pacman)
+p_load(tidyverse, lmerTest, modelr, Metrics) 
 ```
 
 ## Welcome to the third exciting part of the Language Development in ASD exercise
@@ -25,79 +27,54 @@ N.B. There are several datasets for this exercise, so pay attention to which one
 
 How did your models from last time perform? In this exercise you have to compare the results on the training data () and on the test data. Report both of them. Compare them. Discuss why they are different.
 
-- recreate the models you chose last time (just write the model code again and apply it to your training data (from the first assignment))
-- calculate performance of the model on the training data: root mean square error is a good measure. (Tip: google the function rmse())
-- create the test dataset (apply the code from assignment 1 part 1 to clean up the 3 test datasets)
-- test the performance of the models on the test data (Tips: google the functions "predict()")
-- optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
-
-formatting tip: If you write code in this document and plan to hand it in, remember to put include=FALSE in the code chunks before handing in.
-
+- recreate the models you chose last time (just write the model code again and apply it to your training data (from the first assignment)
 ```{r}
-#libraries
-library(pacman)
-p_load(tidyverse, lmerTest, modelr, Metrics)
+#load training data
+train <- read.csv("language_dev_asd_clean_2.csv", sep = ",")
+test <- read.csv("test_clean.csv", sep = ",")
 
-#loading data
-train <- read.csv("language_dev_asd_clean_2.csv")
+#create simple model
+m_simple <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + Diagnosis + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML=FALSE)
 
-#fitting old models to new data
-#quadratic simple
-simple <- lmer(CHI_MLU ~ Diagnosis + VISIT + I(VISIT^2) + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
-
-#quadratic elaborate (fixed effects)
-big_model <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
-
-#rmse 2 approaches
-#rmse from modelr
-modelr::rmse(simple, train) # 0.28
-modelr::rmse(big_model, train) # 0.28
-
-#rmse from Metrics 
-p_load(Metrics)
-Metrics::rmse(train$CHI_MLU, predict(simple))
-Metrics::rmse(train$CHI_MLU, predict(big_model))
-
-#Ricardo 
-#rmse(predict(m), y)
-#rmse(predict(m, newdata), y)
-
-#prediction 
-test <- read.csv("test_clean.csv")
-test <- test[-2,]
-
-str(train)
-str(test)
-test$Age <- as.numeric(test$Age) #age is fucked up. 
-
-predict(big_model, train) #works 
-predict(big_model, test) #works 
-
-
-
-#predict intervals 
-p_load(merTools)
-<<<<<<< HEAD
-predictions <- predictInterval(big_model, test, level = .95)
-predictions <- as.data.frame(predictions)
-
-#adding rownames 
-library(plyr)
-predictions <- rownames_to_column(predictions, "visit")
-
-#how do we put the upper/lower into the plot? 
-ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=predictions[1:35,]) +
-  geom_point() +
-  geom_linerange() +
-  labs(x="Index", y="Prediction w/ 95% PI") + theme_bw()
-=======
-predictInterval(simple, train)
-plot()
->>>>>>> 020c8648e9291a9225ae205f40d0656389ea3c81
-
-
+#create complex morel
+m_complex <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + Diagnosis + Gender + Ethnicity + ADOS_1 + nonVerbalIQ_1 + verbalIQ_1 + MOT_MLU + tokens_MOT + types_MOT + (1+VISIT + I(VISIT^2)|SUBJ), data = train)
 ```
 
+- calculate performance of the model on the training data: root mean square error is a good measure. (Tip: google the function rmse())
+```{r}
+#Performance of model on training data (method 1) 
+modelr::rmse(m_simple, train)
+modelr::rmse(m_complex, train)
+#Performance of model on training data (method 2) 
+rmse <- Metrics::rmse
+rmse(train$CHI_MLU[!is.na(train$CHI_MLU)], predict(m_simple))
+rmse(train$CHI_MLU[!is.na(train$CHI_MLU)], predict(m_complex))
+```
+
+- create the test dataset (apply the code from assignment 1 part 1 to clean up the 3 test datasets)
+```{r}
+#Check Carl and Jan's cleaning work
+```
+
+- test the performance of the models on the test data (Tips: google the functions "predict()")
+```{r}
+#Performance of simple model on test data
+rmse(test$CHI_MLU[!is.na(test$CHI_MLU)], predict(m_simple, newdata = test, allow.new.levels = TRUE))
+
+#Performance on complex model on test data
+predicted <- predict(m_complex, newdata = test, allow.new.levels = TRUE)
+rmse(test$CHI_MLU[!is.na(test$CHI_MLU)], predicted[!is.na(predicted)])
+```
+
+- optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
+formatting tip: If you write code in this document and plan to hand it in, remember to put include=FALSE in the code chunks before handing in.
+```{r}
+#Exclude subject with NA
+test_nona <- test[-c(2), ]
+
+#Calculate predict interval
+predictInterval(m_complex, test_nona)
+```
 
 [HERE GOES YOUR ANSWER]
 
@@ -109,6 +86,14 @@ In this exercise you have to use cross-validation to calculate the predictive er
 
 - Use cross-validation to compare your model from last week with the basic model (Child MLU as a function of Time and Diagnosis, and don't forget the random effects!)
 - (Tips): google the function "createFolds";  loop through each fold, train both models on the other folds and test them on the fold)
+```{r}
+comb <- rbind(train, test)
+CreateFolds(U, 5)
+For(F in Folds) {
+    
+}
+```
+
 
 Which model is better at predicting new data: the one you selected last week or the one chosen via cross-validation this week?
 
