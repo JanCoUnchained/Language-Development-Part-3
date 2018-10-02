@@ -94,8 +94,6 @@ ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=predictions[1:35,]) +
   geom_linerange() +
   labs(x="Index", y="Prediction w/ 95% PI") + theme_bw()
 
-plot()
-
 
 ```
 
