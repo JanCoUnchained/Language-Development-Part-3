@@ -220,11 +220,34 @@ BernieData
 You want to evaluate:
 
 - how does the child fare in ChildMLU compared to the average TD child at each visit? Define the distance in terms of absolute difference between this Child and the average TD.
+```{r}
+data_full <- rbind(train, test)
+#data_3 <- filter(data_3, SUBJ != "1" | VISIT != "2")
+
+data_full_TD <- filter(data_3, Diagnosis == "TD")
+filter(data_full, Diagnosis == "TD") %>% abs(mean(BernieData$CHI_MLU) - mean(data_full$CHI_MLU))
+
+average_visit <- filter(data_full, Diagnosis == "TD") %>%
+  group_by(VISIT) %>% 
+  summarise(CHI_MLU = mean(CHI_MLU))
+average_visit$Bern_MLU <- group_by(BernieData, VISIT) %>% summarise(BERN_MLU = mean(CHI_MLU))
+
+ group_by(BernieData, VISIT) %>% summarise(BERN_MLU = mean(CHI_MLU))
+abs(average_visit$CHI_MLU - average_visit$Bern_MLU$BERN_MLU)
+
+average_visit$bernie_mean <- 
+mutate(average_visit$
+```
+
 (Tip: recreate the equation of the model: Y=Intercept+BetaX1+BetaX2, etc; input the average of the TD group  for each parameter in the model as X1, X2, etc.).
 
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
 
-[HERE GOES YOUR ANSWER]
+```{r}
+
+predict(BernieData, 
+```
+
 
 ### OPTIONAL: Exercise 4) Model Selection via Information Criteria
 Another way to reduce the bad surprises when testing a model on new data is to pay close attention to the relative information criteria between the models you are comparing. Let's learn how to do that!
