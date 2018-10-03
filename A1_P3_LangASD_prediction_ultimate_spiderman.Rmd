@@ -7,17 +7,11 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-<<<<<<< HEAD
 #load libraries
 library(pacman)
 p_load(tidyverse, lmerTest, merTools, Metrics, caret)
 #due to troubles with select-function, we make sure that R always uses the select-function from dplyr
 select <- dplyr::select
-=======
-
-library(tidyverse)
-library(caret)
->>>>>>> dc24dbf95545460681a1e3286098932e7520eeda
 
 # TEST DATA PREPROCESSING
 demo_test_raw <- read.csv("demo_test.csv")
@@ -68,12 +62,12 @@ data_2 <- data %>% #selecting variables with many NAs
   select(SUBJ, VISIT = VISIT.y, Diagnosis, Age, Gender, Ethnicity, 
          ADOS_1, nonVerbalIQ_1, verbalIQ_1, MOT_MLU:tokens_CHI)
 
-
 data_3 <- data_2 %>%
   mutate(SUBJ = as.integer(factor(SUBJ)),
          Gender = ifelse(Gender == 1, "M", "F"), #changes the Gender
          Diagnosis = ifelse(Diagnosis == "A", "ASD", "TD")) #changes diagnosis
 
+#write 
 write_csv(data_3, "test_clean.csv")
 ```
 
@@ -127,22 +121,14 @@ test_2 <- test %>%
 simple_rmse <- Metrics::rmse(test_2$CHI_MLU, predict(simple, newdata = test_2, allow.new.levels = T))
 big_rmse <- Metrics::rmse(test_2$CHI_MLU, predict(big_model, newdata = test_2, allow.new.levels = T))
 
-<<<<<<< HEAD
 #deviding root mean sq error by sd of predicted variable, this is to standardize
 simple_rmse / sd(test_2$CHI_MLU)
 big_rmse / sd(test_2$CHI_MLU)  
-=======
-simple_rmse
-# deviding root mean sq error by sd of predicted variable, this is to standardize
-simple_rmse / sd(test_2$CHI_MLU) #very bad. 
-big_rmse / sd(test_2$CHI_MLU) #quite bad. 
->>>>>>> dc24dbf95545460681a1e3286098932e7520eeda
 
 #predict intervals (pckg: merTools)
 interval_simple <- predictInterval(simple, test_2, level = .95)
 interval_big <- predictInterval(big_model, test_2, level = .95)
 
-<<<<<<< HEAD
 #plotting simple 
 ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=interval_simple[1:35,]) +
   geom_point() +
@@ -154,20 +140,6 @@ ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=interval_big[1:35,]) +
   geom_point() +
   geom_linerange() +
   labs(x="Index", y="Prediction w/ 95% PI") + theme_bw()
-=======
-#Plotting simple 
-ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=interval_simple[1:35,]) +
-  geom_point() +
-  geom_linerange() +
-  labs(x="Index", y="Prediction w/ 95% PI") + theme_bw() 
-
-#Plotting big 
-ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=interval_big[1:35,]) +
-  geom_point() +
-  geom_linerange() +
-  labs(x="Index of big model", y="Prediction w/ 95% PI") + theme_bw()
-
->>>>>>> dc24dbf95545460681a1e3286098932e7520eeda
 ```
 
 ### Exercise 2) Model Selection via Cross-validation (N.B: ChildMLU!)
@@ -179,13 +151,8 @@ In this exercise you have to use cross-validation to calculate the predictive er
 - Use cross-validation to compare your model from last week with the basic model (Child MLU as a function of Time and Diagnosis, and don't forget the random effects!)
 - (Tips): google the function "createFolds";  loop through each fold, train both models on the other folds and test them on the fold)
 ```{r}
-<<<<<<< HEAD
 #set random seed 
 set.seed(1337)
-=======
-set.seed(1337)
-Folds = createFolds(unique(train$SUBJ), k=5, list=TRUE, returnTrain = FALSE) #maybe use unique() inside createfold - QUESTION: does each fold only contain data from the same SUBJ? - i.e., when fold 1 had SUBJ 6 - does it have all observations from SUBJ 6? 
->>>>>>> dc24dbf95545460681a1e3286098932e7520eeda
 
 #create five folds where each subject gets randomly assigned to a fold
 Folds = createFolds(unique(train$SUBJ), k=5, list=TRUE, returnTrain = FALSE)  
@@ -206,7 +173,6 @@ for( X in Folds){
   
   #recreate our models
   SModel = lmer(CHI_MLU ~ Diagnosis + VISIT + I(VISIT^2) + (1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
-  
   BModel = lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT +(1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
 
   #run predict()-function for each of the two models on the new test set and new train set
@@ -266,17 +232,14 @@ You want to evaluate:
 - how does the child fare in ChildMLU compared to the average TD child at each visit? Define the distance in terms of absolute difference between this Child and the average TD.
 ```{r}
 #create data set containing both training and test data
-data_full <- rbind(train, test) 
+data_full <- rbind(train, test)
 
 #calculate the mean MLU of each visit for the TD children
 average_visit <- filter(data_full, Diagnosis == "TD") %>%
   group_by(VISIT) %>% 
   summarise(CHI_MLU = mean(CHI_MLU))
 
-<<<<<<< HEAD
 #extract columns VISIT and CHI_MLU from BernieData and assign it to new data frame
-=======
->>>>>>> dc24dbf95545460681a1e3286098932e7520eeda
 bernie_visit <- BernieData %>%
   select(VISIT, CHI_MLU)
 
@@ -298,40 +261,15 @@ table$difference <- abs(table$BERN_MLU - table$TD_MLU)
 #create plot showcasing differences in MLU between Bernie and the TD children for each visit  
 ggplot(total, aes(VISIT, CHI_MLU, color = bernie))+
   geom_point(size = 2) + 
-<<<<<<< HEAD
   geom_smooth()
-=======
-  geom_line(size = 1)
-
-#making a table
-table <- cbind(bernie_visit[1:2], average_visit[2])
-names(table)[3] <- "TD_MLU"
-names(table)[2] <- "Bernie_MLU"
-
-table <- table %>%
-  mutate(difference = abs(TD_MLU - Bernie_MLU))
-
-table
-
-#unfinished code
-#average_visit$bernie_mean <- 
-#mutate(average_visit$
->>>>>>> dc24dbf95545460681a1e3286098932e7520eeda
 ```
 
 (Tip: recreate the equation of the model: Y=Intercept+BetaX1+BetaX2, etc; input the average of the TD group  for each parameter in the model as X1, X2, etc.).
 
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
 ```{r}
-<<<<<<< HEAD
 #calculate the difference between Bernie's MLU predicted by the model and his actual MLU at the 6th visit
 predict(BModel, BernieData[6,], allow.new.levels = TRUE) - BernieData[6,]$CHI_MLU
-=======
-
-predict_bernie <- predict(BModel, BernieData[6,], allow.new.levels=T)
-predict_bernie - BernieData[6,]$CHI_MLU #0.33
-        
->>>>>>> dc24dbf95545460681a1e3286098932e7520eeda
 ```
 
 ### OPTIONAL: Exercise 4) Model Selection via Information Criteria
