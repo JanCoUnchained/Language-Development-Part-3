@@ -9,7 +9,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
-library(tidyselect)
 library(caret)
 
 # TEST DATA PREPROCESSING
@@ -132,6 +131,7 @@ test_2 <- test %>%
 simple_rmse <- Metrics::rmse(test_2$CHI_MLU, predict(simple, newdata = test_2, allow.new.levels = T))
 big_rmse <- Metrics::rmse(test_2$CHI_MLU, predict(big_model, newdata = test_2, allow.new.levels = T))
 
+simple_rmse
 # deviding root mean sq error by sd of predicted variable, this is to standardize
 simple_rmse / sd(test_2$CHI_MLU) #very bad. 
 big_rmse / sd(test_2$CHI_MLU) #quite bad. 
@@ -140,7 +140,18 @@ big_rmse / sd(test_2$CHI_MLU) #quite bad.
 interval_simple <- predictInterval(simple, test_2, level = .95)
 interval_big <- predictInterval(big_model, test_2, level = .95)
 
-#I plotted this in the other document - not sure whether that is helpful?
+#Plotting simple 
+ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=interval_simple[1:35,]) +
+  geom_point() +
+  geom_linerange() +
+  labs(x="Index", y="Prediction w/ 95% PI") + theme_bw() 
+
+#Plotting big 
+ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=interval_big[1:35,]) +
+  geom_point() +
+  geom_linerange() +
+  labs(x="Index of big model", y="Prediction w/ 95% PI") + theme_bw()
+
 ```
 
 
@@ -171,6 +182,7 @@ for( X in Folds){
   Train = filter(train, !SUBJ %in% X)
 
   SModel = lmer(CHI_MLU ~ Diagnosis + VISIT + I(VISIT^2) + (1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
+  
   BModel = lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT +(1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
 
   predictTestS <- predict(SModel, Test, allow.new.levels=T)
@@ -243,7 +255,6 @@ average_visit <- filter(data_full, Diagnosis == "TD") %>%
   group_by(VISIT) %>% 
   summarise(CHI_MLU = mean(CHI_MLU))
 
-library(dplyr)
 bernie_visit <- BernieData %>%
   dplyr::select(VISIT, CHI_MLU)
 
@@ -251,6 +262,7 @@ bernie_visit$bernie <- "Y"
 average_visit$bernie <- "N"
 
 total <- rbind(bernie_visit, average_visit)
+table <- cbind(bernie_visit, average_visit)
 
 #why doesn't this column "exist" 
 ggplot(total, aes(VISIT, CHI_MLU, color = bernie))+
@@ -260,9 +272,6 @@ ggplot(total, aes(VISIT, CHI_MLU, color = bernie))+
 ggplot(total, aes(VISIT, CHI_MLU, color = bernie))+
   geom_point(size = 2) + 
   geom_line(size = 1)
-
-
-colnames(average_visit)
 
 #unfinished code
 #average_visit$bernie_mean <- 
