@@ -210,7 +210,7 @@ cross_big <- Metrics::rmse(test_2$CHI_MLU, predict(BModel, newdata = test_2, all
 
 as.table(c(cross_simple, cross_big, simple_rmse, big_rmse)) #Comparing simple & complex models from the cross-validated & the old. This probably doesn't make any sense bc. it is the same models except that the cross-validated models have less data to work with. 
 
-#EXTRA: predicting error per visit 
+#EXTRA: predicting error per visit - using the model from last time (since it is the best predictor we have at the moment..)
 
 visit_1 <- subset(test_2, VISIT == 1)
 visit_2 <- subset(test_2, VISIT == 2)
@@ -219,17 +219,17 @@ visit_4 <- subset(test_2, VISIT == 4)
 visit_5 <- subset(test_2, VISIT == 5)
 visit_6 <- subset(test_2, VISIT == 6)
 
-pred_1 <- Metrics::rmse(visit_1$CHI_MLU, predict(BModel, newdata = visit_1, allow.new.levels = T))
+pred_1 <- Metrics::rmse(visit_1$CHI_MLU, predict(big_model, newdata = visit_1, allow.new.levels = T))
 
-pred_2 <- Metrics::rmse(visit_2$CHI_MLU, predict(BModel, newdata = visit_2, allow.new.levels = T))
+pred_2 <- Metrics::rmse(visit_2$CHI_MLU, predict(big_model, newdata = visit_2, allow.new.levels = T))
 
-pred_3 <- Metrics::rmse(visit_3$CHI_MLU, predict(BModel, newdata = visit_3, allow.new.levels = T))
+pred_3 <- Metrics::rmse(visit_3$CHI_MLU, predict(big_model, newdata = visit_3, allow.new.levels = T))
 
-pred_4 <- Metrics::rmse(visit_4$CHI_MLU, predict(BModel, newdata = visit_4, allow.new.levels = T))
+pred_4 <- Metrics::rmse(visit_4$CHI_MLU, predict(big_model, newdata = visit_4, allow.new.levels = T))
 
-pred_5 <- Metrics::rmse(visit_5$CHI_MLU, predict(BModel, newdata = visit_5, allow.new.levels = T))
+pred_5 <- Metrics::rmse(visit_5$CHI_MLU, predict(big_model, newdata = visit_5, allow.new.levels = T))
 
-pred_6 <- Metrics::rmse(visit_6$CHI_MLU, predict(BModel, newdata = visit_6, allow.new.levels = T))
+pred_6 <- Metrics::rmse(visit_6$CHI_MLU, predict(big_model, newdata = visit_6, allow.new.levels = T))
 
 pred_df <- as.data.frame(table(c(pred_1, pred_2, pred_3, pred_4, pred_5, pred_6)))
 pred_df$VISIT <- c(1,2,3,4,5,6)
