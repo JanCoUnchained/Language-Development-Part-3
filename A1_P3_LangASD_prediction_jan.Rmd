@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(tidyselect)
+library(caret)
 
 # TEST DATA PREPROCESSING
 demo_test_raw <- read.csv("demo_test.csv")
@@ -68,7 +69,6 @@ data_3 <- data_2 %>%
 
 write_csv(data_3, "test_clean.csv")
 
-rm(list=ls())
 ```
 
 ## Welcome to the third exciting part of the Language Development in ASD exercise
@@ -153,6 +153,45 @@ In this exercise you have to use cross-validation to calculate the predictive er
 - Use cross-validation to compare your model from last week with the basic model (Child MLU as a function of Time and Diagnosis, and don't forget the random effects!)
 - (Tips): google the function "createFolds";  loop through each fold, train both models on the other folds and test them on the fold)
 
+```{r}
+Folds = createFolds(unique(train$SUBJ), k=5, list=TRUE, returnTrain = FALSE) #maybe use unique() inside createfold
+N=1
+
+
+rmseTrainSim <- NULL
+rmseTrainBig <- NULL
+rmseTestSim <- NULL
+rmseTestBig <- NULL
+
+set.seed(1337)
+for( X in Folds){
+  Test = filter(train, SUBJ %in% X)
+  Train = filter(train, !SUBJ %in% X)
+
+  SModel = lmer(CHI_MLU ~ Diagnosis + VISIT + I(VISIT^2) + (1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
+  BModel = lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT +(1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
+  
+  
+  predictTestS <- predict(SModel, Test, allow.new.levels=T)
+  predictTestB <- predict(BModel, Test, allow.new.levels=T)
+  predictTrainS <- predict(SModel, Train, allow.new.levels=T)
+  predictTrainB <- predict(BModel, Train, allow.new.levels=T)
+  
+  rmseTrainSim[N] <- ModelMetrics::rmse(Train$CHI_MLU, predictTrainS)
+  rmseTestSim[N] <- ModelMetrics::rmse(Test$CHI_MLU, predictTestS)
+  rmseTrainBig[N] <- ModelMetrics::rmse(Train$CHI_MLU, predictTrainB)
+  rmseTestBig[N] <- ModelMetrics::rmse(Test$CHI_MLU, predictTestB)
+  
+  N=N+1
+
+} 
+
+MeanTheFuckers <- as.table(c("Test Sim"=mean(rmseTestSim), "Test Big"=mean(rmseTestBig),"Train Sim"=mean(rmseTrainSim), "Train Big"=mean(rmseTrainBig)))
+
+MeanTheFuckers #REPORT AND COMMENT THIS
+```
+
+
 Which model is better at predicting new data: the one you selected last week or the one chosen via cross-validation this week?
 
 - Test both of them on the test data.
@@ -172,12 +211,32 @@ Let's get to business. This new kiddo - Bernie - has entered your clinic. This c
 
 Bernie is one of the six kids in the test dataset, so make sure to extract that child alone for the following analysis.
 
+```{r}
+BernieData <- filter(test, SUBJ=="2")
+```
+
+
 You want to evaluate:
 
 - how does the child fare in ChildMLU compared to the average TD child at each visit? Define the distance in terms of absolute difference between this Child and the average TD.
 (Tip: recreate the equation of the model: Y=Intercept+BetaX1+BetaX2, etc; input the average of the TD group  for each parameter in the model as X1, X2, etc.).
 
+```{r}
+library(ggthemes)
+
+test %>%
+  full_join(train) %>%
+  mutate(bernie_vs_all = ifelse(SUBJ == 2, "Bernie", as.character(Diagnosis))) %>%
+  ggplot(aes(VISIT, CHI_MLU, color = bernie_vs_all)) +
+    stat_summary(geom = "line", fun.y = "mean", size = 2) +
+    scale_color_grey() +
+    theme_bw()
+```
+
+
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
+
+
 
 [HERE GOES YOUR ANSWER]
 
