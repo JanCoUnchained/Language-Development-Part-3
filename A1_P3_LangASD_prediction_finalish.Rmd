@@ -196,6 +196,7 @@ mean_rmse <- as.table(c("Test Sim"=mean(rmseTestSim), "Test Big"=mean(rmseTestBi
 
 #display table
 mean_rmse
+
 ```
 
 Which model is better at predicting new data: the one you selected last week or the one chosen via cross-validation this week?
@@ -203,6 +204,62 @@ Which model is better at predicting new data: the one you selected last week or 
 - Test both of them on the test data.  
 - Report the results and comment on them.
 ```{r}
+#this is surely wrong, but.. yeah.. 
+cross_simple <- Metrics::rmse(test_2$CHI_MLU, predict(SModel, newdata = test_2, allow.new.levels = T))
+cross_big <- Metrics::rmse(test_2$CHI_MLU, predict(BModel, newdata = test_2, allow.new.levels = T))
+
+as.table(c(cross_simple, cross_big, simple_rmse, big_rmse)) #Comparing simple & complex models from the cross-validated & the old. This probably doesn't make any sense bc. it is the same models except that the cross-validated models have less data to work with. 
+
+#EXTRA: predicting specific 
+
+visit_1 <- subset(test_2, VISIT == 1)
+visit_2 <- subset(test_2, VISIT == 2)
+visit_3 <- subset(test_2, VISIT == 3)
+visit_4 <- subset(test_2, VISIT == 4)
+visit_5 <- subset(test_2, VISIT == 5)
+visit_6 <- subset(test_2, VISIT == 6)
+
+pred_1 <- Metrics::rmse(visit_1$CHI_MLU, predict(BModel, newdata = visit_1, allow.new.levels = T))
+
+pred_2 <- Metrics::rmse(visit_2$CHI_MLU, predict(BModel, newdata = visit_2, allow.new.levels = T))
+
+pred_3 <- Metrics::rmse(visit_3$CHI_MLU, predict(BModel, newdata = visit_3, allow.new.levels = T))
+
+pred_4 <- Metrics::rmse(visit_4$CHI_MLU, predict(BModel, newdata = visit_4, allow.new.levels = T))
+
+pred_5 <- Metrics::rmse(visit_5$CHI_MLU, predict(BModel, newdata = visit_5, allow.new.levels = T))
+
+pred_6 <- Metrics::rmse(visit_6$CHI_MLU, predict(BModel, newdata = visit_6, allow.new.levels = T))
+
+pred_df <- as.data.frame(table(c(pred_1, pred_2, pred_3, pred_4, pred_5, pred_6)))
+pred_df$VISIT <- c(1,2,3,4,5,6)
+pred_df <- pred_df[,-2]
+pred_df$Var1 <- as.numeric(as.character(pred_df$Var1))
+
+#much less error the earlier the visit - did not make it to our written assignment
+ggplot(pred_df, aes(VISIT, Var1))+
+  geom_point()+
+  geom_smooth()
+
+#divided by SD - will be done later 
+standard_1 <- pred_1 / sd(visit_1$CHI_MLU)
+standard_2 <- pred_2 / sd(visit_2$CHI_MLU)
+standard_3 <- pred_3 / sd(visit_3$CHI_MLU)
+standard_4 <- pred_4 / sd(visit_4$CHI_MLU)
+standard_5 <- pred_5 / sd(visit_5$CHI_MLU)
+standard_6 <- pred_6 / sd(visit_6$CHI_MLU)
+
+#into a dataframe 
+standard_df <- as.data.frame(table(c(standard_1, standard_2, standard_3, standard_4, standard_5, standard_6)))
+standard_df$VISIT <- c(1,2,3,4,5,6)
+standard_df <- standard_df[,-2]
+standard_df$Var1 <- as.numeric(as.character(standard_df$Var1))
+
+#plotting the standardized errors - still not in the written assignment
+ggplot(standard_df, aes(VISIT, Var1))+
+  geom_point()+
+  geom_smooth()
+
 
 ```
 
