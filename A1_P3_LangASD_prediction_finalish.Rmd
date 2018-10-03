@@ -210,7 +210,7 @@ cross_big <- Metrics::rmse(test_2$CHI_MLU, predict(BModel, newdata = test_2, all
 
 as.table(c(cross_simple, cross_big, simple_rmse, big_rmse)) #Comparing simple & complex models from the cross-validated & the old. This probably doesn't make any sense bc. it is the same models except that the cross-validated models have less data to work with. 
 
-#EXTRA: predicting specific 
+#EXTRA: predicting error per visit 
 
 visit_1 <- subset(test_2, VISIT == 1)
 visit_2 <- subset(test_2, VISIT == 2)
