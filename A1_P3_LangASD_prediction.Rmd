@@ -77,7 +77,6 @@ predict(big_model, test) #works
 
 #predict intervals 
 p_load(merTools)
-<<<<<<< HEAD
 predictions <- predictInterval(big_model, test, level = .95)
 predictions <- as.data.frame(predictions)
 
@@ -90,10 +89,9 @@ ggplot(aes(x=1:35, y=fit, ymin=lwr, ymax=upr), data=predictions[1:35,]) +
   geom_point() +
   geom_linerange() +
   labs(x="Index", y="Prediction w/ 95% PI") + theme_bw()
-=======
+
 predictInterval(simple, train)
 plot()
->>>>>>> 020c8648e9291a9225ae205f40d0656389ea3c81
 
 
 ```
