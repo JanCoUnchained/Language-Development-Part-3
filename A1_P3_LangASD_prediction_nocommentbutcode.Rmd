@@ -166,6 +166,8 @@ In this exercise you have to use cross-validation to calculate the predictive er
 - (Tips): google the function "createFolds";  loop through each fold, train both models on the other folds and test them on the fold)
 
 ```{r}
+data_full <- rbind(train, test_2) 
+
 set.seed(1337)
 Folds = createFolds(unique(train$SUBJ), k=5, list=TRUE, returnTrain = FALSE) #maybe use unique() inside createfold - QUESTION: does each fold only contain data from the same SUBJ? - i.e., when fold 1 had SUBJ 6 - does it have all observations from SUBJ 6? 
 
@@ -223,43 +225,7 @@ Which model is better at predicting new data: the one you selected last week or 
 - Bonus Question 2: compare the cross-validated predictive error against the actual predictive error on the test data
 
 ```{r}
-#best model 
-set.seed(1337)
-Folds = createFolds(unique(train$SUBJ), k=5, list=TRUE, returnTrain = FALSE) #maybe use unique() inside createfold - QUESTION: does each fold only contain data from the same SUBJ? - i.e., when fold 1 had SUBJ 6 - does it have all observations from SUBJ 6? 
 
-N=1 
-
-rmseTrainSim <- NULL
-rmseTrainBig <- NULL
-rmseTestSim <- NULL
-rmseTestBig <- NULL
-
-set.seed(1337)
-for( X in Folds){
-  Test = filter(train, SUBJ %in% X) #Here we make a test & training set - why don't we use the dedicated test set instead of splitting our training set. Also, how does this code work? 
-  Train = filter(train, !SUBJ %in% X)
-
-  SModel = lmer(CHI_MLU ~ Diagnosis + VISIT + I(VISIT^2) + (1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
-  
-  BModel = lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT +(1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
-
-  predictTestS <- predict(SModel, Test, allow.new.levels=T)
-  predictTestB <- predict(BModel, Test, allow.new.levels=T)
-  predictTrainS <- predict(SModel, Train, allow.new.levels=T)
-  predictTrainB <- predict(BModel, Train, allow.new.levels=T)
-  
-  rmseTrainSim[N] <- ModelMetrics::rmse(Train$CHI_MLU, predictTrainS)
-  rmseTestSim[N] <- ModelMetrics::rmse(Test$CHI_MLU, predictTestS)
-  rmseTrainBig[N] <- ModelMetrics::rmse(Train$CHI_MLU, predictTrainB)
-  rmseTestBig[N] <- ModelMetrics::rmse(Test$CHI_MLU, predictTestB) #this is were you save?
-  
-  N=N+1
-
-} 
-
-MeanTheFuckers <- as.table(c("Test Sim"=mean(rmseTestSim), "Test Big"=mean(rmseTestBig),"Train Sim"=mean(rmseTrainSim), "Train Big"=mean(rmseTrainBig)))
-
-MeanTheFuckers #REPORT AND COMMENT THIS
 
 ```
 
