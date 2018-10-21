@@ -100,13 +100,14 @@ formatting tip: If you write code in this document and plan to hand it in, remem
 train <- read_csv("language_dev_asd_clean_2.csv")
 test <- read_csv("test_clean.csv")
 
-#fitting old models to new data
-#quadratic simple
-simple <- lmer(CHI_MLU ~ Diagnosis + VISIT + 
-                 I(VISIT^2) + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
-#quadratic elaborate 
-big_model <- lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT + 
+#simple
+simple <- lmer(CHI_MLU ~ VISIT * Diagnosis + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
+#big
+big_model_old <- lmer(CHI_MLU ~ (VISIT + I(VISIT^2)) * Diagnosis + verbalIQ_1 + 
                     (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
+
+big_model_new <- lmer(CHI_MLU ~ Diagnosis * VISIT + Diagnosis * I(VISIT^2) + verbalIQ_1 +
+                    (1+VISIT +(VISIT^2)|SUBJ), data = train, REML = FALSE)
 ```
 
 ```{r}
@@ -172,8 +173,10 @@ for( X in Folds){
   Train = filter(train, !SUBJ %in% X)
   
   #recreate our models
-  SModel = lmer(CHI_MLU ~ Diagnosis + VISIT + I(VISIT^2) + (1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
-  BModel = lmer(CHI_MLU ~ VISIT + I(VISIT^2) + verbalIQ_1 + MOT_MLU + tokens_MOT +(1+VISIT + I(VISIT^2)|SUBJ), data = Train, REML = FALSE)
+  SModel = lmer(CHI_MLU ~ VISIT*Diagnosis + (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
+  
+  BModel = lmer(CHI_MLU ~ (VISIT + I(VISIT^2))*Diagnosis + verbalIQ_1 + 
+                    (1+VISIT + I(VISIT^2)|SUBJ), data = train, REML = FALSE)
 
   #run predict()-function for each of the two models on the new test set and new train set
   predictTestS <- predict(SModel, Test, allow.new.levels=T)
@@ -288,26 +291,31 @@ You want to evaluate:
 
 - how does the child fare in ChildMLU compared to the average TD child at each visit? Define the distance in terms of absolute difference between this Child and the average TD.
 ```{r}
+# predictions: Bernie
 bernie_visit <- test %>%
   filter(SUBJ=="2") %>%
   mutate(subject = "Bernie",
-         pred_MLU = predict(BModel, newdata = .))
+         pred_MLU = predict(big_model_new, newdata = ., allow.new.levels = T))
 
+# test + train, excluding Bernie
 data <- rbind(train, test) %>%
   anti_join(bernie_visit)
 
+# predictions: ASD subjects, excluding Bernie
 ASDs <- data %>%
   filter(Diagnosis == "ASD") %>%
   mutate(subject = "ASD",
-         pred_MLU = predict(BModel, newdata = ., allow.new.levels = T))
+         pred_MLU = predict(big_model_new, newdata = ., allow.new.levels = T))
 
+# predictions: TD subjects, appending ASDs and Bernie
 bernie_assess <- data %>%
   filter(Diagnosis == "TD") %>%
   mutate(subject = "TD",
-         pred_MLU = predict(BModel, newdata = ., allow.new.levels = T)) %>%
+         pred_MLU = predict(big_model_new, newdata = ., allow.new.levels = T)) %>%
   rbind(bernie_visit) %>%
   rbind(ASDs)
 
+# plot
 ggplot(bernie_assess, aes(VISIT, pred_MLU, color = subject)) +
   geom_smooth() +
   scale_x_continuous(breaks=seq(1,6,1)) +
@@ -319,12 +327,12 @@ ggplot(bernie_assess, aes(VISIT, pred_MLU, color = subject)) +
 
 # LEAVE IT THERE JUST TO BE SURE
 #create table containing VISIT and MLU from Bernie and the TD children respectively
-table <- cbind(bernie_visit[1:2], average_visit[2])
-names(table)[2] <- "BERN_MLU"
-names(table)[3] <- "TD_MLU"
+#table <- cbind(bernie_visit[1:2], average_visit[2])
+#names(table)[2] <- "BERN_MLU"
+#names(table)[3] <- "TD_MLU"
 
 #calculate the absolute difference in MLU between Bernie and the TD children for each visit
-table$difference <- abs(table$BERN_MLU - table$TD_MLU)
+#table$difference <- abs(table$BERN_MLU - table$TD_MLU)
 ```
 
 (Tip: recreate the equation of the model: Y=Intercept+BetaX1+BetaX2, etc; input the average of the TD group  for each parameter in the model as X1, X2, etc.).
