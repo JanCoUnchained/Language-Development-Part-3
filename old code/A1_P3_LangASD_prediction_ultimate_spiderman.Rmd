@@ -149,7 +149,7 @@ One way to reduce bad surprises when testing a model on new data is to train the
 In this exercise you have to use cross-validation to calculate the predictive error of your models and use this predictive error to select the best possible model.
 
 - Use cross-validation to compare your model from last week with the basic model (Child MLU as a function of Time and Diagnosis, and don't forget the random effects!)
-- (Tips): google the function "createFolds";  loop through each fold, train both models on the other folds and test them on the fold)
+- (Tips): google the function "create      ";  loop through each fold, train both models on the other folds and test them on the fold)
 ```{r}
 #set random seed 
 set.seed(1337)
